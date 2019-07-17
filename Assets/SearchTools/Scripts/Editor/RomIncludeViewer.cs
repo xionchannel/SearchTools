@@ -114,8 +114,30 @@ namespace SearchTools {
 		/// <summary>
 		/// 解析器
 		/// </summary>
-		private LinkAnalyzer linkAnalyzer {get{return linkAnalyzerField ?? (linkAnalyzerField = new LinkAnalyzer());}}
+		private LinkAnalyzer linkAnalyzer
+		{
+			get
+			{
+				if (linkAnalyzerField == null)
+				{
+					if (ScriptableSingleton<LinkAnalyzer>.instance != null)
+					{
+						linkAnalyzerField = ScriptableSingleton<LinkAnalyzer>.instance;
+					}
+					else
+					{
+						linkAnalyzerField = CreateInstance<LinkAnalyzer>();
+					}
+				}
+				return linkAnalyzerField;
+			}
+		}
 		private LinkAnalyzer linkAnalyzerField = null;
+
+		/// <summary>
+		/// 直前のフレームでEditorApplicationが再生されているかどうか
+		/// </summary>
+		private bool prevPlaying = false;
 
 		/// <summary>
 		/// 梱包判定アイコン
@@ -156,6 +178,23 @@ namespace SearchTools {
 				}
 			}
 #endif
+			if (linkAnalyzer.analyzing)
+			{
+				if (linkAnalyzer.suspending)
+				{
+					if (GUILayout.Button("Continue", EditorStyles.toolbarButton, GUILayout.Width(60)))
+					{
+						ContinueAnalyze();
+					}
+				}
+				else
+				{
+					if (GUILayout.Button("Suspend", EditorStyles.toolbarButton, GUILayout.Width(60)))
+					{
+						SuspendAnalyze();
+					}
+				}
+			}
 			{
 				var progressBarPosition = GUILayoutUtility.GetRect(60.0f, EditorStyles.toolbar.fixedHeight);
 				if (linkAnalyzer.analyzing) {
@@ -250,7 +289,8 @@ namespace SearchTools {
 
 			var currentFoldoutUniqueID = parentFoldoutUniqueID + "/" + uniqueID;
 			if (!linkViewStates[(int)analyzeMode].Foldouts.ContainsKey(currentFoldoutUniqueID)) {
-				linkViewStates[(int)analyzeMode].Foldouts.Add(currentFoldoutUniqueID, false);
+				bool foldoutValue = (EditorGUI.indentLevel < 1);	//最初だけはFoldoutを開いておく
+				linkViewStates[(int)analyzeMode].Foldouts.Add(currentFoldoutUniqueID, foldoutValue);
 			}
 			var foldout = linkViewStates[(int)analyzeMode].Foldouts[currentFoldoutUniqueID];
 
@@ -387,7 +427,8 @@ namespace SearchTools {
 		/// </summary>
 		/// <param name="guid">GUID</param>
 		/// <param name="selectionRect">選択矩形</param>
-		private void ProjectWindowItemOnGUI(string guid, Rect selectionRect) {
+		private void ProjectWindowItemOnGUI(string guid, Rect selectionRect)
+		{
 			var pos = selectionRect;
 			if (listItemHeightInProjectWindow < pos.height) {
 				//アイコン
@@ -400,11 +441,15 @@ namespace SearchTools {
 				pos.width = pos.height;
 			}
 			var path = AssetDatabase.GUIDToAssetPath(guid);
-			var include = IsInclude(path);
-			GUI.DrawTexture(pos, includeIcons[(int)include]);
+			//higuchi ProjectWindowへのアイコン描画は行わない
+			//var include = IsInclude(path);
+			//GUI.DrawTexture(pos, includeIcons[(int)include]);
+			//end higuchi
 			pos.x -= pos.width;
-			var assetBundleInclude = IsAssetBundleInclude(path);
-			GUI.DrawTexture(pos, assetBundleIcons[(int)assetBundleInclude]);
+			//higuchi ProjectWindowへのアイコン描画は行わない
+			//var assetBundleInclude = IsAssetBundleInclude(path);
+			//GUI.DrawTexture(pos, assetBundleIcons[(int)assetBundleInclude]);
+			//end higuchi
 		}
 
 		/// <summary>
@@ -443,6 +488,14 @@ namespace SearchTools {
 			if (!linkAnalyzer.analyzing) {
 				EditorApplication.update -= AnalyzingUpdate;
 			}
+			else
+			{
+				if (EditorApplication.isPlayingOrWillChangePlaymode && !prevPlaying)
+				{
+					linkAnalyzer.Pause();
+				}
+				prevPlaying = EditorApplication.isPlaying;
+			}
 		}
 
 		/// <summary>
@@ -450,7 +503,8 @@ namespace SearchTools {
 		/// </summary>
 		private void QuitAnalyze() {
 			EditorApplication.update -= AnalyzingUpdate;
-			linkAnalyzer.Dispose();
+			//ウィンドウを閉じても解析は終わらせない
+			//linkAnalyzer.Dispose();
 		}
 
 		/// <summary>
@@ -460,5 +514,30 @@ namespace SearchTools {
 			linkAnalyzer.Refresh();
 			EditorApplication.update += AnalyzingUpdate;
 		}
+		
+		/// <summary>
+		/// 解析の一時停止
+		/// </summary>
+		private void SuspendAnalyze()
+		{
+			if (linkAnalyzer.analyzing)
+			{
+				EditorApplication.update -= AnalyzingUpdate;
+				linkAnalyzer.Pause();
+			}
+		}
+
+		/// <summary>
+		/// 解析の再開
+		/// </summary>
+		private void ContinueAnalyze()
+		{
+			if (linkAnalyzer.analyzing)
+			{
+				EditorApplication.update += AnalyzingUpdate;
+				linkAnalyzer.Continue();
+			}
+		}
+
 	}
 }
