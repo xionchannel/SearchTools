@@ -140,6 +140,16 @@ namespace SearchTools {
 		private bool prevPlaying = false;
 
 		/// <summary>
+		/// アセット選択のロック状態
+		/// </summary>
+		private static bool isLock = false;
+
+		/// <summary>
+		/// 選択されているアセット
+		/// </summary>
+		private static Object[] selections = null;
+
+		/// <summary>
 		/// 梱包判定アイコン
 		/// </summary>
 		private static Texture2D[] includeIcons;
@@ -163,11 +173,21 @@ namespace SearchTools {
 #endif
 
 		/// <summary>
+		/// 選択状態の切り替え
+		/// </summary>
+		private void OnSelectionChange()
+		{
+			if (isLock) return;
+			selections = Selection.objects;
+		}
+
+		/// <summary>
 		/// ツールバー
 		/// </summary>
 		/// <returns></returns>
 		private Rect Toolbar() {
 			GUILayout.BeginHorizontal(EditorStyles.toolbar);
+			isLock = GUILayout.Toggle(isLock, "Lock", EditorStyles.toolbarButton);
 			analyzeMode = (AnalyzeMode)GUILayout.SelectionGrid((int)analyzeMode, modeLabels, modeLabels.Length, EditorStyles.toolbarButton);
 			GUILayout.FlexibleSpace();
 #if SEARCH_TOOLS_DEBUG
@@ -218,8 +238,9 @@ namespace SearchTools {
 		/// リンクビュー
 		/// </summary>
 		private void LinkView() {
-			if (0 < Selection.objects.Length) {
-				var sortedObjects = Selection.objects.Select(x=>new{obj = x, sortValue = GetSortStringInLinkView(x)}).ToList();
+			if (selections == null) return;
+			if (0 < selections.Length) {
+				var sortedObjects = selections.Select(x=>new{obj = x, sortValue = GetSortStringInLinkView(x)}).ToList();
 				sortedObjects.Sort((x,y)=>{
 					return string.Compare(x.sortValue, y.sortValue);
 				});
