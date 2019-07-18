@@ -66,6 +66,14 @@ namespace SearchTools {
 		}
 
 		/// <summary>
+		/// ロックボタンの描画
+		/// </summary>
+		private void ShowButton(Rect rect)
+		{
+			isLock = GUI.Toggle(rect, isLock, GUIContent.none, "IN LockButton");
+		}
+
+		/// <summary>
 		/// 解析モード
 		/// </summary>
 		private enum AnalyzeMode {
@@ -187,7 +195,6 @@ namespace SearchTools {
 		/// <returns></returns>
 		private Rect Toolbar() {
 			GUILayout.BeginHorizontal(EditorStyles.toolbar);
-			isLock = GUILayout.Toggle(isLock, "Lock", EditorStyles.toolbarButton);
 			analyzeMode = (AnalyzeMode)GUILayout.SelectionGrid((int)analyzeMode, modeLabels, modeLabels.Length, EditorStyles.toolbarButton);
 			GUILayout.FlexibleSpace();
 #if SEARCH_TOOLS_DEBUG
