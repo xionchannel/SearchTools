@@ -468,8 +468,8 @@ namespace SearchTools {
 				pos.x = pos.xMax - pos.height;
 				pos.width = pos.height;
 			}
-			var path = AssetDatabase.GUIDToAssetPath(guid);
 			//higuchi ProjectWindowへのアイコン描画は行わない
+			//var path = AssetDatabase.GUIDToAssetPath(guid);
 			//var include = IsInclude(path);
 			//GUI.DrawTexture(pos, includeIcons[(int)include]);
 			//end higuchi
