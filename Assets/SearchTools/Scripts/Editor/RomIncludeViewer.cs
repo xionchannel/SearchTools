@@ -66,6 +66,14 @@ namespace SearchTools {
 		}
 
 		/// <summary>
+		/// ロックボタンの描画
+		/// </summary>
+		private void ShowButton(Rect rect)
+		{
+			isLock = GUI.Toggle(rect, isLock, GUIContent.none, "IN LockButton");
+		}
+
+		/// <summary>
 		/// 解析モード
 		/// </summary>
 		private enum AnalyzeMode {
@@ -140,6 +148,16 @@ namespace SearchTools {
 		private bool prevPlaying = false;
 
 		/// <summary>
+		/// アセット選択のロック状態
+		/// </summary>
+		private static bool isLock = false;
+
+		/// <summary>
+		/// 選択されているアセット
+		/// </summary>
+		private static Object[] selections = null;
+
+		/// <summary>
 		/// 梱包判定アイコン
 		/// </summary>
 		private static Texture2D[] includeIcons;
@@ -161,6 +179,15 @@ namespace SearchTools {
 		[SerializeField]
 		private bool displayGUID = false;
 #endif
+
+		/// <summary>
+		/// 選択状態の切り替え
+		/// </summary>
+		private void OnSelectionChange()
+		{
+			if (isLock) return;
+			selections = Selection.objects;
+		}
 
 		/// <summary>
 		/// ツールバー
@@ -218,8 +245,9 @@ namespace SearchTools {
 		/// リンクビュー
 		/// </summary>
 		private void LinkView() {
-			if (0 < Selection.objects.Length) {
-				var sortedObjects = Selection.objects.Select(x=>new{obj = x, sortValue = GetSortStringInLinkView(x)}).ToList();
+			if (selections == null) return;
+			if (0 < selections.Length) {
+				var sortedObjects = selections.Select(x=>new{obj = x, sortValue = GetSortStringInLinkView(x)}).ToList();
 				sortedObjects.Sort((x,y)=>{
 					return string.Compare(x.sortValue, y.sortValue);
 				});
