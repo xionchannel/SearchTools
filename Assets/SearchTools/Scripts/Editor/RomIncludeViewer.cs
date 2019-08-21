@@ -40,7 +40,7 @@ namespace SearchTools {
 				AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/SearchTools/Textures/AssetBundleAmbiguousIcon.png"),
 			};
 
-			StartAnalyze();
+			//StartAnalyze();
 		}
 
 		/// <summary>
@@ -63,6 +63,7 @@ namespace SearchTools {
 				EditorGUILayout.HelpBox("\"Editor Settings/Asset Serialization\" isn't \"Force Text\"", MessageType.Warning);
 			}
 			LinkView();
+			Helpbar();
 		}
 
 		/// <summary>
@@ -128,13 +129,19 @@ namespace SearchTools {
 			{
 				if (linkAnalyzerField == null)
 				{
-					if (ScriptableSingleton<LinkAnalyzer>.instance != null)
+					var guids = AssetDatabase.FindAssets("t:LinkAnalyzer");
+					if (guids.Length > 0)
 					{
-						linkAnalyzerField = ScriptableSingleton<LinkAnalyzer>.instance;
+						var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+						linkAnalyzerField = AssetDatabase.LoadAssetAtPath<LinkAnalyzer>(path);
 					}
 					else
 					{
 						linkAnalyzerField = CreateInstance<LinkAnalyzer>();
+						guids = AssetDatabase.FindAssets("t:script RomIncludeViewer");
+						var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+						path = path.Replace("RomIncludeViewer.cs", "LinkAnalyzer.asset");
+						AssetDatabase.CreateAsset(linkAnalyzerField, path);
 					}
 				}
 				return linkAnalyzerField;
@@ -193,6 +200,33 @@ namespace SearchTools {
 		/// ツールバー
 		/// </summary>
 		/// <returns></returns>
+		private void Helpbar()
+		{
+			string text = string.Empty;
+			if (selections != null)
+			{
+				if (selections.Length > 0)
+				{
+					text = "Press 'SHIFT' and click to select object.";
+				}
+				else
+				{
+					text = "Select object.";
+				}
+			} 
+			
+			EditorGUILayout.BeginVertical("box");
+			EditorGUILayout.BeginHorizontal();
+			GUILayout.FlexibleSpace();
+			GUILayout.Label(text);
+			EditorGUILayout.EndHorizontal();
+			EditorGUILayout.EndVertical();
+		}
+
+		/// <summary>
+		/// ツールバー
+		/// </summary>
+		/// <returns></returns>
 		private Rect Toolbar() {
 			GUILayout.BeginHorizontal(EditorStyles.toolbar);
 			analyzeMode = (AnalyzeMode)GUILayout.SelectionGrid((int)analyzeMode, modeLabels, modeLabels.Length, EditorStyles.toolbarButton);
@@ -226,6 +260,7 @@ namespace SearchTools {
 				var progressBarPosition = GUILayoutUtility.GetRect(60.0f, EditorStyles.toolbar.fixedHeight);
 				if (linkAnalyzer.analyzing) {
 					EditorGUI.ProgressBar(progressBarPosition, linkAnalyzer.progress, linkAnalyzer.progress.ToString("0.00%"));
+					EditorUtility.SetDirty(linkAnalyzer);
 				} else {
 					if (GUI.Button(progressBarPosition, "Refresh", EditorStyles.toolbarButton)) {
 						Refresh();
@@ -260,6 +295,7 @@ namespace SearchTools {
 					}
 				}
 			}
+			GUILayout.FlexibleSpace();
 		}
 
 		/// <summary>
@@ -457,6 +493,30 @@ namespace SearchTools {
 		/// <param name="selectionRect">選択矩形</param>
 		private void ProjectWindowItemOnGUI(string guid, Rect selectionRect)
 		{
+			//カウント表示
+			if (linkAnalyzer != null)
+			{
+				var p = selectionRect;
+				p.xMin -= 16;
+				var path = AssetDatabase.GUIDToAssetPath(guid);
+				var obj = AssetDatabase.LoadMainAssetAtPath(path);
+				if (obj.GetType() != typeof(UnityEditor.DefaultAsset))
+				{
+					var uniqueID = LinkAnalyzer.ConvertObjectToUniqueID(obj);
+					var link = linkAnalyzer.GetInboundLinks(uniqueID);
+					if (link == null)
+					{
+						GUI.color = Color.red;
+						GUI.Label(p, "0");
+					}
+					else
+					{
+						GUI.Label(p, link.Count.ToString());
+					}
+					GUI.color = Color.white;
+				}
+			}
+
 			var pos = selectionRect;
 			if (listItemHeightInProjectWindow < pos.height) {
 				//アイコン
@@ -520,9 +580,14 @@ namespace SearchTools {
 			{
 				if (EditorApplication.isPlayingOrWillChangePlaymode && !prevPlaying)
 				{
-					linkAnalyzer.Pause();
+					SuspendAnalyze();
 				}
 				prevPlaying = EditorApplication.isPlaying;
+				
+				if (EditorApplication.isCompiling && !linkAnalyzer.suspending)
+				{
+					SuspendAnalyze();
+				}
 			}
 		}
 

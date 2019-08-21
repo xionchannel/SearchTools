@@ -13,7 +13,7 @@ using System.Threading;
 using System.Text;
 
 namespace SearchTools {
-	public class LinkAnalyzer : /*System.IDisposable*/ScriptableSingleton<LinkAnalyzer> {
+	public class LinkAnalyzer : /*System.IDisposable*/ScriptableObject {
 
 		[System.Serializable]
 		public struct AssetUniqueID {
@@ -164,12 +164,18 @@ namespace SearchTools {
 			Object result = null;
 			if (IsAsset(uniqueID)) {
 				var assetPath = AssetDatabase.GUIDToAssetPath(uniqueID.guid);
-				if (uniqueID.fileID != 0) {
-					result = CustomGUIDetail.LoadAllAssetsAtPath(assetPath)
-										.Where(x=>Unsupported.GetLocalIdentifierInFile(x.GetInstanceID()) == uniqueID.fileID)
-										.FirstOrDefault();
-				} else {
-					result = AssetDatabase.LoadMainAssetAtPath(assetPath);
+				if (AssetDatabase.LoadMainAssetAtPath(assetPath) != null)
+				{
+					if (uniqueID.fileID != 0)
+					{
+						result = CustomGUIDetail.LoadAllAssetsAtPath(assetPath)
+							.Where(x => Unsupported.GetLocalIdentifierInFile(x.GetInstanceID()) == uniqueID.fileID)
+							.FirstOrDefault();
+					}
+					else
+					{
+						result = AssetDatabase.LoadMainAssetAtPath(assetPath);
+					}
 				}
 			}
 			return result;
@@ -690,6 +696,12 @@ namespace SearchTools {
 			dataBasePath = Application.dataPath.Substring(0, Application.dataPath.Length - 6); //末端の"Assets"を削除
 		}
 
+		private void OnDestroy()
+		{
+			EditorUtility.SetDirty(this);
+			AssetDatabase.SaveAssets();
+		}
+
 		/// <summary>
 		/// 解析進捗設定
 		/// </summary>
@@ -861,8 +873,8 @@ namespace SearchTools {
 			//逆リンク判定
 			AnalyzeForInboundLink();
 
-			analyzeOnMainThreadUpdate = AnalyzeAssetBundleOnMainThread();
-			EditorApplication.update += AnalyzeOnMainThreadUpdate;
+			//analyzeOnMainThreadUpdate = AnalyzeAssetBundleOnMainThread();
+			//EditorApplication.update += AnalyzeOnMainThreadUpdate;
 			analyzeThread = null;
 		}
 

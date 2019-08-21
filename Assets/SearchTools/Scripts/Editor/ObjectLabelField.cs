@@ -17,20 +17,27 @@ namespace SearchTools {
 			int controlID = GUIUtility.GetControlID(FocusType.Passive);
 
 			switch (Event.current.GetTypeForControl(controlID)) {
-			case EventType.Repaint:
+				case EventType.Repaint:
 				{
 					GUIContent label;
 					if (value != null) {
 						label = EditorGUIUtility.ObjectContent(value, value.GetType());
 					} else {
-						label = new GUIContent("null", EditorGUIUtility.FindTexture("CollabConflict"));
+						label = new GUIContent("null", EditorGUIUtility.FindTexture("P4_Conflicted"));
 					}
 					EditorGUI.LabelField(position, label);
 				}
 				break;
-			case EventType.MouseDown:
+				case EventType.MouseDown:
 				if (position.Contains(Event.current.mousePosition) && (Event.current.button == 0)) {
-					EditorGUIUtility.PingObject(value);
+					if (Event.current.shift)
+					{
+						Selection.activeObject = value;
+					}
+					else
+					{
+						EditorGUIUtility.PingObject(value);
+					}
 				}
 				break;
 			}
