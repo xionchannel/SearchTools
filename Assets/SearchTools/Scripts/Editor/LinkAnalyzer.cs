@@ -156,6 +156,51 @@ namespace SearchTools {
 			}
 			return result;
 		}
+		
+		/// <summary>
+		/// GUIDをユニークIDに変換
+		/// </summary>
+		public static AssetUniqueID ConvertGUIDToUniqueID(string guid) {
+			var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+			var result = new AssetUniqueID(guid);
+
+			bool hasFileID;
+			var linkerType = GetLinkerType(assetPath);
+			switch (linkerType) {
+				case GetLinkerTypeReturn.Home:
+				case GetLinkerTypeReturn.MetaHome:
+				case GetLinkerTypeReturn.Script:
+					hasFileID = false;
+					break;
+				case GetLinkerTypeReturn.Importer:
+					//var obj = AssetDatabase.LoadMainAssetAtPath(assetPath);
+					//hasFileID = AssetDatabase.IsSubAsset(obj);
+					//hasFileID = AssetDatabase.IsSubAsset(GetInstanceID(guid));
+					hasFileID = false;
+					break;
+				default:
+					hasFileID = true;
+					break;
+			}
+			if (hasFileID) {
+				#if false
+				var instanceID = obj.GetInstanceID();
+				#else
+				var instanceID = GetInstanceID(guid);
+				#endif
+
+				var fileID = Unsupported.GetLocalIdentifierInFile(instanceID);
+				result.fileID = fileID;
+			}
+			return result;
+		}
+		private static int GetInstanceID(string guid)
+		{
+			System.Reflection.MethodInfo method = typeof( AssetDatabase).GetMethod("GetInstanceIDFromGUID"
+				, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+			int instanceID =(int) method.Invoke(null,new object[]{ (object)guid});
+			return instanceID;
+		}
 
 		/// <summary>
 		/// ユニークIDをオブジェクトに変換
@@ -341,8 +386,53 @@ namespace SearchTools {
 				var guid = pathToGuid[path];
 				var uniqueID = new AssetUniqueID(guid);
 				result = GetInboundLinks(uniqueID);
+
+				if (result == null || result.Count == 0)
+				{
+					uniqueID = ConvertGUIDToUniqueID(guid);
+					result = GetInboundLinks(uniqueID);
+				}
 			}
 			return result;
+		}
+		
+		/// <summary>
+		/// GUIDから参照カウントを返す
+		/// </summary>
+		public int GetReferenceCount(string guid)
+		{
+			var uniqueID = ConvertGUIDToUniqueID(guid);
+			return GetReferenceCount(uniqueID);
+		}
+		
+		/// <summary>
+		/// ユニークIDから参照カウントを返す
+		/// </summary>
+		public int GetReferenceCount(AssetUniqueID uniqueID)
+		{
+			var guid = uniqueID.guid;
+			var links = GetInboundLinks(uniqueID);
+			int refCount = links.Count;
+			if (guidToPath.ContainsKey(guid))
+			{
+				var linkerType = GetLinkerType(guidToPath[guid]);
+				if (linkerType == GetLinkerTypeReturn.Importer)
+				{
+					refCount = 0;
+					foreach (var l in links)
+					{
+						if (l.fileID != 0 && l.fileID != 2100000)
+						{
+							refCount += GetInboundLinks(l).Count;
+						}
+						else
+						{
+							refCount++;
+						}
+					}
+				}
+			}
+			return refCount;
 		}
 
 		/// <summary>

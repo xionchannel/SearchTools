@@ -407,6 +407,7 @@ namespace SearchTools {
 					LinkView(nestUniqueID, currentFoldoutUniqueID);
 				}
 
+				/*
 				if ((includeStateFlags & LinkAnalyzer.IncludeStateFlags.Scripts) != 0) {
 					IncludeLabelView("Scripts", includeIcons[(int)LinkAnalyzer.IsIncludeReturn.True], includeIcons[(int)LinkAnalyzer.IsIncludeReturn.True]);
 				}
@@ -422,6 +423,7 @@ namespace SearchTools {
 				if ((includeStateFlags & LinkAnalyzer.IncludeStateFlags.AlwaysIncludedShaders) != 0) {
 					IncludeLabelView("Project Setting/Graphics Settings", includeIcons[(int)LinkAnalyzer.IsIncludeReturn.True], includeIcons[(int)LinkAnalyzer.IsIncludeReturn.True]);
 				}
+				*/
 
 				--EditorGUI.indentLevel;
 			}
@@ -442,6 +444,7 @@ namespace SearchTools {
 				CustomGUI.ObjectLabelField(position, obj);
 			}
 
+			/*
 			var include = linkAnalyzer.IsInclude(uniqueID);
 			position.xMin = position.xMax - position.height;
 			GUI.DrawTexture(position, includeIcons[(int)include]);
@@ -451,6 +454,7 @@ namespace SearchTools {
 				position.x -= position.width;
 				GUI.DrawTexture(position, assetBundleIcons[(int)LinkAnalyzer.IsIncludeReturn.True]);
 			}
+			*/
 		}
 
 		/// <summary>
@@ -497,26 +501,27 @@ namespace SearchTools {
 			if (linkAnalyzer != null)
 			{
 				var p = selectionRect;
-				p.xMin -= 16;
+				p.xMin -= 32;
+				p.width = 32;
 				var path = AssetDatabase.GUIDToAssetPath(guid);
-				var obj = AssetDatabase.LoadMainAssetAtPath(path);
-				if (obj.GetType() != typeof(UnityEditor.DefaultAsset))
+				if (System.IO.Path.GetExtension(path) != string.Empty)
 				{
-					var uniqueID = LinkAnalyzer.ConvertObjectToUniqueID(obj);
-					var link = linkAnalyzer.GetInboundLinks(uniqueID);
-					if (link == null)
+					var style = new GUIStyle(GUI.skin.label) {alignment = TextAnchor.MiddleRight};
+					var refCount = linkAnalyzer.GetReferenceCount(guid);
+					if (refCount == 0)
 					{
 						GUI.color = Color.red;
-						GUI.Label(p, "0");
+						GUI.Label(p, "0", style);
 					}
 					else
 					{
-						GUI.Label(p, link.Count.ToString());
+						GUI.Label(p, refCount.ToString(), style);
 					}
 					GUI.color = Color.white;
 				}
 			}
 
+			/*
 			var pos = selectionRect;
 			if (listItemHeightInProjectWindow < pos.height) {
 				//アイコン
@@ -528,16 +533,13 @@ namespace SearchTools {
 				pos.x = pos.xMax - pos.height;
 				pos.width = pos.height;
 			}
-			//higuchi ProjectWindowへのアイコン描画は行わない
-			//var path = AssetDatabase.GUIDToAssetPath(guid);
-			//var include = IsInclude(path);
-			//GUI.DrawTexture(pos, includeIcons[(int)include]);
-			//end higuchi
+			var path = AssetDatabase.GUIDToAssetPath(guid);
+			var include = IsInclude(path);
+			GUI.DrawTexture(pos, includeIcons[(int)include]);
 			pos.x -= pos.width;
-			//higuchi ProjectWindowへのアイコン描画は行わない
-			//var assetBundleInclude = IsAssetBundleInclude(path);
-			//GUI.DrawTexture(pos, assetBundleIcons[(int)assetBundleInclude]);
-			//end higuchi
+			var assetBundleInclude = IsAssetBundleInclude(path);
+			GUI.DrawTexture(pos, assetBundleIcons[(int)assetBundleInclude]);
+			*/
 		}
 
 		/// <summary>
