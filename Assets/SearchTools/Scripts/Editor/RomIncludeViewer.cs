@@ -58,6 +58,8 @@ namespace SearchTools {
 		/// 描画
 		/// </summary>
 		public void OnGUI() {
+			if (selections != Selection.objects) OnSelectionChange();
+			
 			Toolbar();
 			if (EditorSettings.serializationMode != SerializationMode.ForceText) {
 				EditorGUILayout.HelpBox("\"Editor Settings/Asset Serialization\" isn't \"Force Text\"", MessageType.Warning);
