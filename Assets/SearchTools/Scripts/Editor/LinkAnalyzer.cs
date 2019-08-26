@@ -412,6 +412,7 @@ namespace SearchTools {
 		{
 			var guid = uniqueID.guid;
 			var links = GetInboundLinks(uniqueID);
+			if (links == null) links = new List<AssetUniqueID>();
 			int refCount = links.Count;
 			if (guidToPath.ContainsKey(guid))
 			{
