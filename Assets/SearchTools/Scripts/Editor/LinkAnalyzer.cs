@@ -424,7 +424,11 @@ namespace SearchTools {
 					{
 						if (l.fileID != 0 && l.fileID != 2100000)
 						{
-							refCount += GetInboundLinks(l).Count;
+							var linksTmp = GetInboundLinks(l);
+							if (linksTmp != null)
+							{
+								refCount += linksTmp.Count;
+							}
 						}
 						else
 						{
