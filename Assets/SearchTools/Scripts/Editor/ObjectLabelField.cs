@@ -1,4 +1,4 @@
-﻿// (C) 2016 ERAL
+// (C) 2016 ERAL
 // Distributed under the Boost Software License, Version 1.0.
 // (See copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -52,7 +52,7 @@ namespace SearchTools {
 			Object value;
 			if (fileID != 0) {
 				value = CustomGUIDetail.LoadAllAssetsAtPath(assetPath)
-									.Where(x=>Unsupported.GetLocalIdentifierInFile(x.GetInstanceID()) == fileID)
+									.Where(x=>(int)Unsupported.GetLocalIdentifierInFileForPersistentObject(x) == fileID)
 									.FirstOrDefault();
 			} else {
 				value = AssetDatabase.LoadMainAssetAtPath(assetPath);
@@ -106,7 +106,7 @@ namespace SearchTools {
 			Object value;
 			if (fileID != 0) {
 				value = CustomGUIDetail.LoadAllAssetsAtPath(assetPath)
-									.Where(x=>Unsupported.GetLocalIdentifierInFile(x.GetInstanceID()) == fileID)
+									.Where(x=>(int)Unsupported.GetLocalIdentifierInFileForPersistentObject(x) == fileID)
 									.FirstOrDefault();
 			} else {
 				value = AssetDatabase.LoadMainAssetAtPath(assetPath);

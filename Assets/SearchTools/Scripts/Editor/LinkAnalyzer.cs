@@ -1,4 +1,4 @@
-﻿// (C) 2016 ERAL
+// (C) 2016 ERAL
 // Distributed under the Boost Software License, Version 1.0.
 // (See copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -150,8 +150,7 @@ namespace SearchTools {
 				break;
 			}
 			if (hasFileID) {
-				var instanceID = obj.GetInstanceID();
-				var fileID = Unsupported.GetLocalIdentifierInFile(instanceID);
+				var fileID = (int)Unsupported.GetLocalIdentifierInFileForPersistentObject(obj);
 				result.fileID = fileID;
 			}
 			return result;
@@ -183,23 +182,11 @@ namespace SearchTools {
 					break;
 			}
 			if (hasFileID) {
-				#if false
-				var instanceID = obj.GetInstanceID();
-				#else
-				var instanceID = GetInstanceID(guid);
-				#endif
-
-				var fileID = Unsupported.GetLocalIdentifierInFile(instanceID);
+				var obj = AssetDatabase.LoadAssetAtPath<Object>(assetPath);
+				var fileID = (int)Unsupported.GetLocalIdentifierInFileForPersistentObject(obj);
 				result.fileID = fileID;
 			}
 			return result;
-		}
-		private static int GetInstanceID(string guid)
-		{
-			System.Reflection.MethodInfo method = typeof( AssetDatabase).GetMethod("GetInstanceIDFromGUID"
-				, System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
-			int instanceID =(int) method.Invoke(null,new object[]{ (object)guid});
-			return instanceID;
 		}
 
 		/// <summary>
@@ -214,7 +201,7 @@ namespace SearchTools {
 					if (uniqueID.fileID != 0)
 					{
 						result = CustomGUIDetail.LoadAllAssetsAtPath(assetPath)
-							.Where(x => Unsupported.GetLocalIdentifierInFile(x.GetInstanceID()) == uniqueID.fileID)
+							.Where(x => (int)Unsupported.GetLocalIdentifierInFileForPersistentObject(x) == uniqueID.fileID)
 							.FirstOrDefault();
 					}
 					else
